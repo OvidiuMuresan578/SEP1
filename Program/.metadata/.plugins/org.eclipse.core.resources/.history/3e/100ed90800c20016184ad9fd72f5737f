@@ -1,0 +1,302 @@
+import java.io.Serializable;
+
+public class ViaBusCompanyModelManager implements Serializable
+{
+	private static final long serialVersionUID = 1L;
+	private CustomerList customers;
+	private ReservationList reservations;
+	private TourList tours;
+	private BusList buses;
+	private ChauffeurList chauffeurs;
+	private FileIO file;
+	
+	public ViaBusCompanyModelManager()
+	{
+		file = new FileIO();
+		file.load();
+	}
+	
+	public CustomerList searchCustomers(String searchPhrase)
+	{
+		CustomerList results = new CustomerList();
+		results.mergeWith(customers.getCustomersByFullName(searchPhrase));
+		results.mergeWith(customers.getCustomersByAddress(searchPhrase));
+		results.mergeWith(customers.getCustomersByEmailAddress(searchPhrase));
+		results.mergeWith(customers.getCustomersByCVR(searchPhrase));
+		results.mergeWith(customers.getCustomersByPhoneNumber(searchPhrase));
+		results.mergeWith(customers.getCustomersByCompanyName(searchPhrase));
+		
+		DateTime birthday = DateTime.parse(searchPhrase);
+		if(birthday != null)
+			results.mergeWith(customers.getCustomersByBirthday(birthday));
+		
+		return results;
+	}
+	
+	public Customer findCustomer(String fullName, String address, String phoneNumber, String emailAddress, String CVR, String companyName, String birthday)
+	{
+		CustomerList results = null;
+		boolean company = false;
+		if(fullName != null)
+			results = customers.getCustomersByFullName(fullName);
+		if(address != null)
+			results = customers.getCustomersByAddress(address);
+		if(phoneNumber != null)
+			results = customers.getCustomersByPhoneNumber(phoneNumber);
+		if(emailAddress != null)
+			results = customers.getCustomersByEmailAddress(emailAddress);
+		if(birthday != null)
+		{	
+			DateTime DateTimeBirthday = DateTime.parse(birthday);
+			if(DateTimeBirthday != null)
+				results = customers.getCustomersByBirthday(DateTimeBirthday);
+		}
+		if(CVR != null)
+		{
+			results = customers.getCustomersByCVR(CVR);
+			company = true;
+		}
+		if(companyName != null)
+		{
+			results = customers.getCustomersByCompanyName(companyName);
+			company = true;
+		}
+		
+		if(company)
+		{
+			if(CVR != null)
+				results = results.getCustomersByCVR(CVR);
+			if(companyName != null)
+				results = results.getCustomersByCompanyName(companyName);
+		}
+		else
+		{
+			if(fullName != null)
+				results = results.getCustomersByFullName(fullName);
+			if(address != null)
+				results = results.getCustomersByAddress(address);
+			if(phoneNumber != null)
+				results = results.getCustomersByPhoneNumber(phoneNumber);
+			if(emailAddress != null)
+				results = results.getCustomersByEmailAddress(emailAddress);
+			if(birthday != null)
+			{	
+				DateTime DateTimeBirthday = DateTime.parse(birthday);
+				if(DateTimeBirthday != null)
+					results = results.getCustomersByBirthday(DateTimeBirthday);
+			}
+		}
+		
+		if(results.getCustomerCount() == 1)
+			return results.getCustomer(0);
+		else
+			return null;
+	}
+	
+	public void addCustomer(Customer customer)
+	{
+		customers.addCustomer(customer);
+	}
+	
+	public void deleteCustomer(Customer customer)
+	{
+		customers.deleteCustomer(customer);
+	}	
+	
+	public ReservationList searchReservations(String searchPhrase)
+	{
+		return searchReservations(searchPhrase, true);
+	}
+	
+	private ReservationList searchReservations(String searchPhrase, boolean searchForTour)
+	{
+		ReservationList results = new ReservationList();
+		results.mergeWith(reservations.getReservationsByPassenger(searchPhrase));
+		
+		if(searchPhrase.matches("[0-9]*[.,]?[0-9]+$"))
+		{
+			String doubleString = searchPhrase.replaceAll(",", ".");
+			double price = Double.parseDouble(doubleString);
+			results.mergeWith(reservations.getReservationsByPrice(price));
+		}
+		
+		CustomerList customers = searchCustomers(searchPhrase);
+		for(int i = 0; i < customers.getCustomerCount(); i++)
+			results.mergeWith(reservations.getReservationsByCustomer(customers.getCustomer(i)));
+		
+		if(searchForTour)
+		{
+			TourList tours = searchTours(searchPhrase, false);
+			for(int i = 0; i < tours.getTourCount(); i++)
+				results.mergeWith(reservations.getReservationsByTour(tours.getTour(i)));
+		}
+		
+		return results;
+	}
+	
+	public void addReservation(Reservation reservation)
+	{
+		reservations.addReservation(reservation);
+	}
+	
+	public void deleteReservation(Reservation reservation)
+	{
+		reservations.deleteReservation(reservation);
+	}
+	
+	public TourList getTravels()
+	{
+		TourList travels = new TourList();
+		for(int i = 0; i < tours.getTourCount(); i++)
+			if(tours.getTour(i).getClassName() == "Travel")
+				travels.addTour(tours.getTour(i));
+		return travels;
+	}
+	
+	public TourList getOneDayTrips()
+	{
+		TourList oneDayTrips = new TourList();
+		for(int i = 0; i < tours.getTourCount(); i++)
+			if(tours.getTour(i).getClassName() == "OneDayTrip")
+				oneDayTrips.addTour(tours.getTour(i));
+		return oneDayTrips;
+	}
+	
+	public TourList getBusAndChauffeurs()
+	{
+		TourList busAndChauffeurs = new TourList();
+		for(int i = 0; i < tours.getTourCount(); i++)
+			if(tours.getTour(i).getClassName() == "BusAndChauffeur")
+				busAndChauffeurs.addTour(tours.getTour(i));
+		return busAndChauffeurs;
+	}
+	
+	public TourList searchTours(String searchPhrase)
+	{
+		return searchTours(searchPhrase, true);
+	}
+	
+	private TourList searchTours(String searchPhrase, boolean searchForReservation)
+	{
+		TourList results = new TourList();
+		results.mergeWith(tours.getToursByDestination(searchPhrase));
+
+		DateTime date = DateTime.parse(searchPhrase);
+		if(date != null)
+			results.mergeWith(tours.getToursByDateTime(date));
+		
+		ChauffeurList chauffeurs = searchChauffeurs(searchPhrase);
+		for(int i = 0; i < chauffeurs.getChauffeurCount(); i++)
+			results.mergeWith(tours.getToursByChauffeur(chauffeurs.getChauffeur(i)));
+		
+		BusList buses = searchBuses(searchPhrase);
+		for(int i = 0; i < buses.getBusCount(); i++)
+			results.mergeWith(tours.getToursByBus(buses.getBus(i)));
+		
+		if(searchForReservation)
+		{	
+			ReservationList reservations = searchReservations(searchPhrase, false);
+			for(int i = 0; i < reservations.getReservationCount(); i++)
+				results.mergeWith(tours.getToursByReservation(reservations.getReservation(i)));
+		}
+		
+		return results;
+	}
+	
+	public void addTour(Tour tour)
+	{
+		tours.addTour(tour);
+	}
+	
+	public void deleteTour(Tour tour)
+	{
+		tours.deleteTour(tour);
+	}
+	
+	public BusList getBuses()
+	{
+		return buses;
+	}
+	
+	public BusList searchBuses(String searchPhrase)
+	{
+		BusList results = new BusList();
+		results.mergeWith(buses.getBusesByManufacturer(searchPhrase));
+		results.mergeWith(buses.getBusesByColor(searchPhrase));
+		results.mergeWith(buses.getBusesByModel(searchPhrase));
+		results.mergeWith(buses.getBusesByPlateNumber(searchPhrase));
+		results.mergeWith(buses.getBusesByUniqueNumber(searchPhrase));
+		
+		if(!searchPhrase.matches(".*[^0-9].*"))
+		{
+			int manufacturingYear = Integer.parseInt(searchPhrase);
+			if(manufacturingYear >= 1900 && manufacturingYear <= DateTime.now().getYear())
+				results.mergeWith(buses.getBusesByManufacturingYear(manufacturingYear));
+		}
+		
+		return results;
+	}
+	
+	public BusList getAvailableBuses(DateTime from, DateTime to)
+	{	
+		return buses.getAvailableBuses(from, to);
+	}
+	
+	public void addBus(Bus bus)
+	{
+		buses.addBus(bus);
+	}
+	
+	public void deleteBus(Bus bus)
+	{
+		buses.deleteBus(bus);
+	}
+	
+	public ChauffeurList getChauffeurs()
+	{
+		return chauffeurs;
+	}
+	
+	public ChauffeurList searchChauffeurs(String searchPhrase)
+	{
+		ChauffeurList results = new ChauffeurList();
+		results.mergeWith(chauffeurs.getChauffeursByFullName(searchPhrase));
+		results.mergeWith(chauffeurs.getChauffeursByAddress(searchPhrase));
+		results.mergeWith(chauffeurs.getChauffeursByID(searchPhrase));
+		results.mergeWith(chauffeurs.getChauffeursByPhoneNumber(searchPhrase));
+		results.mergeWith(chauffeurs.getChauffeursByEmailAddress(searchPhrase));
+		results.mergeWith(chauffeurs.getChauffeursByWishes(searchPhrase));
+		return results;
+	}
+	
+	public ChauffeurList getAvailableChauffeurs(DateTime from, DateTime to)
+	{
+		return chauffeurs.getAvailableChauffeurs(from, to);
+	}
+	
+	public void addChauffeur(Chauffeur chauffeur)
+	{
+		chauffeurs.addChauffeur(chauffeur);
+	}
+	
+	public void deleteChauffeur(Chauffeur chauffeur)
+	{
+		chauffeurs.deleteChauffeur(chauffeur);
+	}
+	
+	public void save()
+	{
+		file.write(this);
+	}
+	
+	public void load()
+	{
+		ViaBusCompanyModelManager that = file.read();
+		this.buses = that.buses;
+		this.chauffeurs = that.chauffeurs;
+		this.customers = that.customers;
+		this.file = that.file;
+		this.reservations = that.reservations;
+		this.tours = that.tours;
+	}
+}

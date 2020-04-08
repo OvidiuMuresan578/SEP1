@@ -1,0 +1,2 @@
+INDEX VERSION 1.127+C:\Users\kryst\Dropbox\VIA\Materials\SEP1\Program\.metadata\.plugins\org.eclipse.jdt.core
+1546438294.index

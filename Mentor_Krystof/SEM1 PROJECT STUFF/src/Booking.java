@@ -1,0 +1,219 @@
+import java.io.Serializable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+/**
+ * A class which holds the information of one Booking, checked in or not
+ * @author Anton Akov
+ */
+
+
+public class Booking implements Serializable
+{
+   private Room[] bookedRooms;
+   private ArrayList<Guest> guests;
+   private boolean checkedIn;
+   private BookingDate dates;
+   
+   private String note;
+   private String discount;
+   private int extraBeds;
+   private int expectedGuests;
+   
+   
+   /**
+    * default constructor
+    * @param g contains the name of the person who made the booking
+    * @param d the date object containing expected arrival and departure dates
+    * @param bR array of booked rooms
+    */
+   public Booking(Guest g, BookingDate d, Room[] bR)
+   {
+      
+      guests = new ArrayList<Guest>();
+      guests.add(g);
+      checkedIn = false;
+      dates = d;
+      discount = "";
+      
+      bookedRooms = bR;
+      for(int i = 0;i<bookedRooms.length;i++)
+      {
+         bookedRooms[i].addBooking(this);
+      }
+      
+      extraBeds = 0;
+      expectedGuests = 0;
+      
+      note = "";
+   }
+   
+   /**
+    * method we planned to use but didn't have the time to implement in the GUI
+    * @param d value if discount as the % number (has to be whole) for example 10, 15, 20, 22, etc.
+    */
+   public void setDiscount(String d){discount = d;}
+   /**
+    * method we planned to use but didn't have the time to implement in the GUI
+    * @return returns String the discount
+    */
+   public String getDiscount(){return discount;}
+   
+   /**
+    * Method that gets the name for the booking
+    * @return String of the name
+    */
+   public String getName(){return guests.get(0).getName();}
+   /**
+    * Method that set the name for the booking
+    * @param n new name
+    */
+   public void setName(String n){guests.get(0).setName(n);}
+   //public static ArrayList<Room> accessRooms(){return bookedRooms;}
+   
+   /**
+    * Method that checks the state of the booking
+    * @return true if it's been checked in
+    */
+   public boolean isCheckedIn(){return checkedIn;}
+   /**
+    * sets the state of the booking
+    * @param c new state
+    */
+   public void setCheckedIn(boolean c){checkedIn = c;}
+   /**
+    * Returns the date object assigned to the booking
+    * @return BookingDate object
+    */
+   public BookingDate getDates(){return dates;}
+   /**
+    * sets the dates for the booking
+    * @param d new dates
+    */
+   public void setDates(BookingDate d){dates = d;}
+   
+   /**
+    * checks if one of the booking's dates matches today's one
+    * @return true of either the departure or the arrival is today
+    */
+   public boolean isBookingToday(){return dates.isDateToday();}
+   
+   /**
+    * Returns the array of booked rooms
+    * @return Room[]
+    */
+   public Room[] getBookedRooms(){return bookedRooms;}
+   
+   /**
+    * sets the array of booked rooms
+    * @param r new array
+    */
+   public void setBookedRooms(Room[] r){bookedRooms = r;}
+   
+   /**
+    * gets the room number of the first room in the array
+    * @return Integer of the room number
+    */
+   public int getFirstRoom(){return bookedRooms[0].getRoomNumber();}
+   
+   /**
+    * removes the current booking from the rooms its connected to
+    */
+   public void delete()
+   {
+      /*int i = 0;
+      while(i<bookedRooms.length);
+      {
+         bookedRooms[i].removeBooking(this);
+         i++;
+      }*/
+      
+      for(int i = 0; i<bookedRooms.length;i++)
+         bookedRooms[i].removeBooking(this);
+   }
+   
+   /**
+    * returns a copy of the list of guests for the booking
+    * @return result of ArrayList.clone()
+    */
+   public ArrayList<Guest> getGuestsClone(){return (ArrayList<Guest>) guests.clone();}
+   /**
+    * gets the custom note for the booking
+    * @return String of the note text
+    */
+   public String getNote(){return note;}
+   /**
+    * sets the note text
+    * @param n new text
+    */
+   public void setNote(String n){note = n;}
+   
+   /**
+    * sets the list of guests for the booking
+    * @param g the new arrayList
+    */
+   public void setGuests(ArrayList<Guest> g){guests = g;}
+   //@Override
+   /*public int hashCode()
+   {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + Arrays.hashCode(bookedRooms);
+      result = prime * result + (checkedIn ? 1231 : 1237);
+      result = prime * result + ((dates == null) ? 0 : dates.hashCode());
+      long temp;
+      temp = (long) Double.parseDouble(discount);
+      result = prime * result + (int) (temp ^ (temp >>> 32));
+      result = prime * result + expectedGuests;
+      result = prime * result + extraBeds;
+      result = prime * result + ((guests == null) ? 0 : guests.hashCode());
+      result = prime * result + indexInBookingTable;
+      result = prime * result + indexInGuestTable;
+      return result;
+   }*/
+   
+   @Override
+   /**
+    * autogenerated equals method
+    */
+   public boolean equals(Object obj)
+   {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (!(obj instanceof Booking))
+         return false;
+      Booking other = (Booking) obj;
+      if (!Arrays.equals(bookedRooms, other.bookedRooms))
+         return false;
+      if (checkedIn != other.checkedIn)
+         return false;
+      if (dates == null)
+      {
+         if (other.dates != null)
+            return false;
+      }
+      else if (!dates.equals(other.dates))
+         return false;
+      if (!discount.equals(other.discount))
+         return false;
+      if (expectedGuests != other.expectedGuests)
+         return false;
+      if (extraBeds != other.extraBeds)
+         return false;
+      if (guests == null)
+      {
+         if (other.guests != null)
+            return false;
+      }
+      else if (!guests.equals(other.guests))
+         return false;
+      
+      return true;
+   }
+   
+   
+   
+}
